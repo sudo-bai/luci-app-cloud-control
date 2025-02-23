@@ -11,5 +11,7 @@ s:option(Value, "user", "Username").default = ""
 s:option(Value, "nic", "Network Interface").default = "br-lan"
 s:option(Value, "mac", "MAC Address").default = "0****************F5"
 s:option(Value, "topic", "Topic").default = "PC001"
+s:option(Flag, "enabled", "Enable Cloud Control").default = "0"
 
+return m
 return m
