@@ -1,0 +1,8 @@
+config main
+    option client_id '*************************'
+    option ip '192.168.1.50'
+    option password '************'
+    option user '114514'
+    option nic 'br-lan'
+    option mac '00:00:00:00:00:00'
+    option topic 'PC001'
