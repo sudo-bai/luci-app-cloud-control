@@ -8,14 +8,14 @@ PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/cloud-control
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE:=Cloud PC Control
-  DEPENDS:=+libuci +libubox +libpthread +etherwake +sshpass +curl
+SECTION:=utils
+CATEGORY:=Utilities
+TITLE:=Cloud PC Control
+DEPENDS:=+libuci +libubox +libpthread +etherwake +sshpass +curl
 endef
 
 define Package/cloud-control/description
-  Cloud controlled PC power management utility
+Cloud controlled PC power management utility
 endef
 
 define Build/Prepare
