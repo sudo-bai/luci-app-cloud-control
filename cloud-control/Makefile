@@ -1,4 +1,3 @@
-QUILT:=0
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cloud-control 
