@@ -1,4 +1,4 @@
-name: Build luci-app-cloud-control
+name: Build luci-app-cloud-control for x86_64
 
 on:
   push:
@@ -10,33 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout plugin source
         uses: actions/checkout@v4
 
-      - name: Set up build environment
+      - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y build-essential libncurses5-dev gawk git subversion libssl-dev gettext unzip
 
-      - name: Clone OpenWrt SDK
+      - name: Clone OpenWrt source (24.10 x86_64)
         run: |
           git clone --depth=1 -b openwrt-24.10 https://github.com/openwrt/openwrt.git openwrt
-          cd openwrt
+
+      - name: Prepare OpenWrt build system
+        working-directory: openwrt
+        run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Copy luci-app-cloud-control to OpenWrt package
+      - name: Set target to x86_64
+        working-directory: openwrt
         run: |
-          cp -r ./ openwrt/package/luci-app-cloud-control
+          echo 'CONFIG_TARGET_x86=y' >> .config
+          echo 'CONFIG_TARGET_x86_64=y' >> .config
+          echo 'CONFIG_TARGET_x86_64_Generic=y' >> .config
+          make defconfig
+
+      - name: Copy luci-app-cloud-control into OpenWrt packages
+        run: |
+          mkdir -p openwrt/package/luci-app-cloud-control
+          cp -r Makefile luasrc root openwrt/package/luci-app-cloud-control/
 
       - name: Build luci-app-cloud-control
+        working-directory: openwrt
         run: |
-          cd openwrt
-          make defconfig
-          make package/luci-app-cloud-control/compile V=s
+          make package/luci-app-cloud-control/compile V=s -j$(nproc)
 
       - name: Upload .ipk artifact
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-cloud-control-ipk
-          path: openwrt/bin/packages/**/luci/luci-app-cloud-control_*.ipk
+          name: luci-app-cloud-control-x86_64
+          path: openwrt/bin/packages/x86_64/luci/luci-app-cloud-control_*.ipk
