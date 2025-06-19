@@ -29,7 +29,7 @@ jobs:
 
       - name: Copy packages to SDK
         run: |
-          SDK_DIR=$(echo $SDK_DIR)
+          source $GITHUB_ENV
           mkdir -p $SDK_DIR/package/luci-app-cloud-control
           cp -r luci-app-cloud-control/* $SDK_DIR/package/luci-app-cloud-control/
           mkdir -p $SDK_DIR/package/cloud-control
@@ -37,26 +37,35 @@ jobs:
 
       - name: Update Feeds & Install Feeds
         run: |
+          source $GITHUB_ENV
           cd $SDK_DIR
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Generate .config and defconfig
         run: |
+          source $GITHUB_ENV
           cd $SDK_DIR
           echo "CONFIG_PACKAGE_cloud-control=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
           make defconfig
 
-      - name: Build Package
+      - name: Build cloud-control
         run: |
+          source $GITHUB_ENV
           cd $SDK_DIR
-          make package/luci-app-cloud-control/compile V=s
+          make package/cloud-control/compile V=s
+
+      - name: Build luci-app-cloud-control
+        run: |
+          source $GITHUB_ENV
+          cd $SDK_DIR
+          make package/feeds/luci/luci-app-cloud-control/compile V=s
 
       - name: Archive Built ipk
         if: success()
         run: |
-          SDK_DIR=$(echo $SDK_DIR)
+          source $GITHUB_ENV
           mkdir -p ipk-out
           find $SDK_DIR/bin/ -name "*.ipk" -exec cp {} ipk-out/ \;
 
