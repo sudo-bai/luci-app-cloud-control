@@ -4,6 +4,11 @@ START=99
 USE_PROCD=1
 
 start_service() {
+    enabled=$(uci get cloud_control.@main[0].enabled 2>/dev/null)
+    if [ "$enabled" != "1" ]; then
+        echo "Cloud control not enabled, not starting..."
+        return 1
+    fi
     procd_open_instance
     procd_set_param command /usr/bin/cloud_control
     procd_set_param respawn
