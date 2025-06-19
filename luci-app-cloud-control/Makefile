@@ -32,7 +32,7 @@ define Package/luci-app-cloud-control/install
 	$(CP) ./files/usr/lib/lua/luci/controller/*.lua $(1)/usr/lib/lua/luci/controller/
 	$(CP) ./files/usr/lib/lua/luci/model/cbi/*.lua $(1)/usr/lib/lua/luci/model/cbi/
 	$(CP) ./files/etc/config/cloud_control $(1)/etc/config/
-	$(CP) ./files/etc/init.d/cloud_control $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/etc/init.d/cloud_control $(1)/etc/init.d/
 endef
 
 $(eval $(call BuildPackage,luci-app-cloud-control))
