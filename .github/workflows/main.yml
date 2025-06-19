@@ -1,61 +1,58 @@
-name: Build cloud-control & luci-app-cloud-control (x86_64)
+name: Build OpenWrt ipk
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
-  build:
+  build-ipk:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install build dependencies
+      - name: Install Dependencies
         run: |
-          sudo apt update
-          sudo apt install -y build-essential libncurses5-dev gawk git subversion libssl-dev gettext unzip
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
 
-      - name: Clone OpenWrt 24.10 for x86_64
+      - name: Download OpenWrt SDK
         run: |
-          git clone --depth=1 -b openwrt-24.10 https://github.com/openwrt/openwrt.git openwrt
+          export OWRT_SDK_URL="https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+          wget "$OWRT_SDK_URL" -O sdk.tar.xz
+          tar -xf sdk.tar.xz
+          SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
+          echo "SDK_DIR=$SDK_DIR" >> $GITHUB_ENV
 
-      - name: Update feeds
-        working-directory: openwrt
+      - name: Copy package to SDK
         run: |
+          SDK_DIR=$(echo $SDK_DIR)
+          mkdir -p $SDK_DIR/package/luci-app-cloud-control
+          cp -r ./* $SDK_DIR/package/luci-app-cloud-control/ || true
+
+      - name: Update Feeds & Install Feeds
+        run: |
+          cd $SDK_DIR
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Set build target to x86_64
-        working-directory: openwrt
+      - name: Build Package
         run: |
-          echo 'CONFIG_TARGET_x86=y' >> .config
-          echo 'CONFIG_TARGET_x86_64=y' >> .config
-          echo 'CONFIG_TARGET_x86_64_Generic=y' >> .config
-          make defconfig
+          cd $SDK_DIR
+          make package/luci-app-cloud-control/compile V=s
 
-      - name: Copy cloud-control backend
+      - name: Archive Built ipk
+        if: success()
         run: |
-          mkdir -p openwrt/package/cloud-control
-          cp -r cloud-control/* openwrt/package/cloud-control/
+          SDK_DIR=$(echo $SDK_DIR)
+          mkdir -p ipk-out
+          find $SDK_DIR/bin/ -name "*.ipk" -exec cp {} ipk-out/ \;
 
-      - name: Copy luci-app-cloud-control frontend
-        run: |
-          mkdir -p openwrt/package/luci-app-cloud-control
-          cp -r Makefile luasrc root openwrt/package/luci-app-cloud-control/
-
-      - name: Compile packages
-        working-directory: openwrt
-        run: |
-          make package/cloud-control/compile V=s -j$(nproc)
-          make package/luci-app-cloud-control/compile V=s -j$(nproc)
-
-      - name: Upload IPK packages
+      - name: Upload ipk Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cloud-control-ipks
-          path: |
-            openwrt/bin/packages/x86_64/*/cloud-control_*.ipk
-            openwrt/bin/packages/x86_64/*/luci-app-cloud-control_*.ipk
+          name: luci-app-cloud-control-ipk
+          path: ipk-out/
