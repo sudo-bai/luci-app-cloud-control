@@ -51,10 +51,9 @@ s:option(Value, "mac", "MAC Address").default = "00:00:00:00:00:00"
 s:option(Value, "topic", "Topic").default = "PC001"
 local enabled = s:option(Flag, "enabled", "Enable Cloud Control")
 enabled.default = "0"
-enabled.rmempty = false   
+enabled.rmempty = false
 
-
-function s.commit_handler(self, section)
+m.on_after_commit = function(self)
     luci.sys.call("/etc/init.d/cloud_control restart >/dev/null 2>&1 &")
 end
 
