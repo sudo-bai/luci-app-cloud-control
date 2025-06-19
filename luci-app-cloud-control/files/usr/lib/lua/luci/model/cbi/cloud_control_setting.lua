@@ -52,8 +52,7 @@ enabled.default = "0"
 enabled.rmempty = false
 
 m.on_after_commit = function(self)
-    luci.sys.call("echo luCI_commit_test > /tmp/luci-commit-test.txt")
-    luci.sys.call("/etc/init.d/cloud_control restart >/dev/null 2>&1 &")
+    luci.sys.call("/etc/init.d/cloud_control reload >/dev/null 2>&1 &")
 end
 
 return m
