@@ -28,12 +28,10 @@ end
 
 m = Map("cloud_control", "Cloud PC Control Settings")
 
--- 服务状态
 local s_status = m:section(SimpleSection)
 s_status.title = "服务状态"
 s_status.description = get_status()
 
--- 日志展示
 local s_log = m:section(SimpleSection)
 s_log.title = "运行日志"
 s_log.description = get_log()
@@ -54,6 +52,7 @@ enabled.default = "0"
 enabled.rmempty = false
 
 m.on_after_commit = function(self)
+    luci.sys.call("echo luCI_commit_test > /tmp/luci-commit-test.txt")
     luci.sys.call("/etc/init.d/cloud_control restart >/dev/null 2>&1 &")
 end
 
