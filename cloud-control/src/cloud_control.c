@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define LOG_FILE "/var/log/cloud_control.log"
 
@@ -15,6 +16,7 @@ struct Config {
     char nic[32];
     char mac[32];
     char topic[32];
+    char enabled[8];
 };
 
 // 日志函数，带时间戳
@@ -36,7 +38,7 @@ static void log_message(const char *fmt, ...) {
     fclose(f);
 }
 
-// 修正版：遍历section，按type查找main
+// 遍历section，按type查找main
 static void load_config(struct Config *cfg) {
     struct uci_context *ctx = uci_alloc_context();
     struct uci_package *pkg = NULL;
@@ -77,9 +79,11 @@ static void load_config(struct Config *cfg) {
                 strncpy(cfg->mac, option->v.string, sizeof(cfg->mac));
             else if (strcmp(opt_e->name, "topic") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->topic, option->v.string, sizeof(cfg->topic));
+            else if (strcmp(opt_e->name, "enabled") == 0 && option->type == UCI_TYPE_STRING)
+                strncpy(cfg->enabled, option->v.string, sizeof(cfg->enabled));
         }
-        log_message("Config loaded: client_id=%s, ip=%s, user=%s, nic=%s, mac=%s, topic=%s",
-            cfg->client_id, cfg->ip, cfg->user, cfg->nic, cfg->mac, cfg->topic);
+        log_message("Config loaded: client_id=%s, ip=%s, user=%s, nic=%s, mac=%s, topic=%s, enabled=%s",
+            cfg->client_id, cfg->ip, cfg->user, cfg->nic, cfg->mac, cfg->topic, cfg->enabled);
     } else {
         log_message("ERROR: Section 'main' not found in config");
     }
@@ -93,7 +97,22 @@ int main() {
     memset(&config, 0, sizeof(config));
     log_message("cloud_control starting...");
     load_config(&config);
-    // 后续代码使用config结构体中的值...
+
+    // 配置未启用则直接退出
+    if (strcmp(config.enabled, "1") != 0) {
+        log_message("cloud_control not enabled, exiting...");
+        log_message("cloud_control stopped.");
+        return 0;
+    }
+
+    // 持续运行，模拟服务进程
+    log_message("cloud_control running (service loop)...");
+    while (1) {
+        sleep(60); // 每分钟可执行一次具体逻辑
+        // 你可以在这里添加你的业务处理代码
+    }
+
+    // 不会执行到这里
     log_message("cloud_control stopped.");
     return 0;
 }
