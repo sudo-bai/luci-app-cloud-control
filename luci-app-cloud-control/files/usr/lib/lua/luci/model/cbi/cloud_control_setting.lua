@@ -42,7 +42,7 @@ local s = m:section(TypedSection, "main", "Main Settings")
 s.addremove = false
 s.anonymous = true
 
-s:option(Value, "client_id", "Client ID").default = " "
+s:option(Value, "client_id", "Client ID").default = ""
 s:option(Value, "ip", "Host IP").default = "192.168.1.50"
 s:option(Value, "password", "Password").password = true
 s:option(Value, "user", "Username").default = ""
@@ -52,11 +52,7 @@ s:option(Value, "topic", "Topic").default = "PC001"
 local enabled = s:option(Flag, "enabled", "Enable Cloud Control")
 enabled.default = "0"
 
--- LuCI 配合脚本：保存并应用时自动重启服务
-function s.cfgsections(self)
-    return { "main" }
-end
-
+-- 保存并应用时自动重启服务
 function s.commit_handler(self, section)
     luci.sys.call("/etc/init.d/cloud_control restart >/dev/null 2>&1 &")
 end
