@@ -51,7 +51,9 @@ local enabled = s:option(Flag, "enabled", "Enable Cloud Control")
 enabled.default = "0"
 enabled.rmempty = false
 
+-- 先killall再reload，避免残留进程
 m.on_after_commit = function(self)
+    luci.sys.call("killall -9 cloud_control >/dev/null 2>&1")
     luci.sys.call("/etc/init.d/cloud_control reload >/dev/null 2>&1 &")
 end
 
