@@ -1,4 +1,4 @@
-name: Build cloud-control & luci-app-cloud-control for x86_64
+name: Build cloud-control & luci-app-cloud-control (x86_64)
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Install build dependencies
@@ -18,7 +18,7 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential libncurses5-dev gawk git subversion libssl-dev gettext unzip
 
-      - name: Clone OpenWrt 24.10 source (x86_64)
+      - name: Clone OpenWrt 24.10 for x86_64
         run: |
           git clone --depth=1 -b openwrt-24.10 https://github.com/openwrt/openwrt.git openwrt
 
@@ -28,7 +28,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Set x86_64 target
+      - name: Set build target to x86_64
         working-directory: openwrt
         run: |
           echo 'CONFIG_TARGET_x86=y' >> .config
@@ -44,21 +44,18 @@ jobs:
       - name: Copy luci-app-cloud-control frontend
         run: |
           mkdir -p openwrt/package/luci-app-cloud-control
-          cp -r luci-app-cloud-control/Makefile \
-                luci-app-cloud-control/root \
-                luci-app-cloud-control/luasrc \
-                openwrt/package/luci-app-cloud-control/
+          cp -r Makefile luasrc root openwrt/package/luci-app-cloud-control/
 
-      - name: Build both packages
+      - name: Compile packages
         working-directory: openwrt
         run: |
           make package/cloud-control/compile V=s -j$(nproc)
           make package/luci-app-cloud-control/compile V=s -j$(nproc)
 
-      - name: Upload IPK artifacts
+      - name: Upload IPK packages
         uses: actions/upload-artifact@v4
         with:
-          name: cloud-control-packages
+          name: cloud-control-ipks
           path: |
             openwrt/bin/packages/x86_64/*/cloud-control_*.ipk
             openwrt/bin/packages/x86_64/*/luci-app-cloud-control_*.ipk
