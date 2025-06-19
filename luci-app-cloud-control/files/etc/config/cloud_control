@@ -6,4 +6,4 @@ config main
     option nic 'br-lan'
     option mac '00:00:00:00:00:00'
     option topic 'PC001'
-    option enabled '1'       # 勾选时是1，取消时是0或无
+    option enabled '0'       # 勾选时是1，取消时是0或无
