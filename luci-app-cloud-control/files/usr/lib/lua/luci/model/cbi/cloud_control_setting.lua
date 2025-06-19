@@ -20,7 +20,6 @@ local function get_log()
         lines[#lines + 1] = line
     end
     f:close()
-    -- 只显示最后50行
     local total = #lines
     local show_from = math.max(1, total - 49)
     local out = table.concat({ unpack(lines, show_from, total) }, "<br>")
@@ -50,5 +49,16 @@ s:option(Value, "user", "Username").default = ""
 s:option(Value, "nic", "Network Interface").default = "br-lan"
 s:option(Value, "mac", "MAC Address").default = "00:00:00:00:00:00"
 s:option(Value, "topic", "Topic").default = "PC001"
-s:option(Flag, "enabled", "Enable Cloud Control").default = "0"
+local enabled = s:option(Flag, "enabled", "Enable Cloud Control")
+enabled.default = "0"
+
+-- LuCI 配合脚本：保存并应用时自动重启服务
+function s.cfgsections(self)
+    return { "main" }
+end
+
+function s.commit_handler(self, section)
+    luci.sys.call("/etc/init.d/cloud_control restart >/dev/null 2>&1 &")
+end
+
 return m
