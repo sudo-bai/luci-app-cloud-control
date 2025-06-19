@@ -36,6 +36,7 @@ static void log_message(const char *fmt, ...) {
     fclose(f);
 }
 
+// 修正版：遍历section，按type查找main
 static void load_config(struct Config *cfg) {
     struct uci_context *ctx = uci_alloc_context();
     struct uci_package *pkg = NULL;
@@ -47,24 +48,34 @@ static void load_config(struct Config *cfg) {
         return;
     }
 
-    struct uci_section *s = uci_lookup_section(ctx, pkg, "main");
+    struct uci_element *e;
+    struct uci_section *s = NULL;
+    // 遍历所有section，查找 type == "main"
+    uci_foreach_element(&pkg->sections, e) {
+        s = uci_to_section(e);
+        if (strcmp(s->type, "main") == 0) {
+            break;
+        }
+        s = NULL;
+    }
+
     if (s) {
-        struct uci_element *e = NULL;
-        uci_foreach_element(&s->options, e) {
-            struct uci_option *option = uci_to_option(e);
-            if (strcmp(e->name, "client_id") == 0 && option->type == UCI_TYPE_STRING)
+        struct uci_element *opt_e = NULL;
+        uci_foreach_element(&s->options, opt_e) {
+            struct uci_option *option = uci_to_option(opt_e);
+            if (strcmp(opt_e->name, "client_id") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->client_id, option->v.string, sizeof(cfg->client_id));
-            else if (strcmp(e->name, "ip") == 0 && option->type == UCI_TYPE_STRING)
+            else if (strcmp(opt_e->name, "ip") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->ip, option->v.string, sizeof(cfg->ip));
-            else if (strcmp(e->name, "password") == 0 && option->type == UCI_TYPE_STRING)
+            else if (strcmp(opt_e->name, "password") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->password, option->v.string, sizeof(cfg->password));
-            else if (strcmp(e->name, "user") == 0 && option->type == UCI_TYPE_STRING)
+            else if (strcmp(opt_e->name, "user") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->user, option->v.string, sizeof(cfg->user));
-            else if (strcmp(e->name, "nic") == 0 && option->type == UCI_TYPE_STRING)
+            else if (strcmp(opt_e->name, "nic") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->nic, option->v.string, sizeof(cfg->nic));
-            else if (strcmp(e->name, "mac") == 0 && option->type == UCI_TYPE_STRING)
+            else if (strcmp(opt_e->name, "mac") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->mac, option->v.string, sizeof(cfg->mac));
-            else if (strcmp(e->name, "topic") == 0 && option->type == UCI_TYPE_STRING)
+            else if (strcmp(opt_e->name, "topic") == 0 && option->type == UCI_TYPE_STRING)
                 strncpy(cfg->topic, option->v.string, sizeof(cfg->topic));
         }
         log_message("Config loaded: client_id=%s, ip=%s, user=%s, nic=%s, mac=%s, topic=%s",
