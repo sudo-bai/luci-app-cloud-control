@@ -27,11 +27,13 @@ jobs:
           SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
           echo "SDK_DIR=$SDK_DIR" >> $GITHUB_ENV
 
-      - name: Copy package to SDK
+      - name: Copy packages to SDK
         run: |
           SDK_DIR=$(echo $SDK_DIR)
           mkdir -p $SDK_DIR/package/luci-app-cloud-control
-          cp -r ./* $SDK_DIR/package/luci-app-cloud-control/ || true
+          cp -r luci-app-cloud-control/* $SDK_DIR/package/luci-app-cloud-control/
+          mkdir -p $SDK_DIR/package/cloud-control
+          cp -r cloud-control/* $SDK_DIR/package/cloud-control/
 
       - name: Update Feeds & Install Feeds
         run: |
@@ -42,8 +44,8 @@ jobs:
       - name: Generate .config and defconfig
         run: |
           cd $SDK_DIR
-          echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
           echo "CONFIG_PACKAGE_cloud-control=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
           make defconfig
 
       - name: Build Package
