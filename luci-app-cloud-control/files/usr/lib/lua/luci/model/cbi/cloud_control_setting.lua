@@ -11,14 +11,11 @@ end
 
 m = Map("cloud_control", "Cloud PC Control Settings")
 
-s_status = m:section(TypedSection, "_dummy", "状态")
-s_status.anonymous = true
-s_status.addremove = false
-status = s_status:option(DummyValue, "_status", "服务状态")
-status.rawhtml = true
-status.default = get_status()
+local s_status = m:section(SimpleSection)
+s_status.title = "服务状态"
+s_status.description = get_status()
 
-s = m:section(TypedSection, "main", "Main Settings")
+local s = m:section(TypedSection, "main", "Main Settings")
 s.addremove = false
 s.anonymous = true
 
