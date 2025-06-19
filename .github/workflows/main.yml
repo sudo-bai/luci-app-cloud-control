@@ -60,7 +60,7 @@ jobs:
         run: |
           source $GITHUB_ENV
           cd $SDK_DIR
-          make package/feeds/luci/luci-app-cloud-control/compile V=s
+          make package/luci-app-cloud-control/compile V=s
 
       - name: Archive Built ipk
         if: success()
