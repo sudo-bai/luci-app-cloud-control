@@ -1,0 +1,42 @@
+name: Build luci-app-cloud-control
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up build environment
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential libncurses5-dev gawk git subversion libssl-dev gettext unzip
+
+      - name: Clone OpenWrt SDK
+        run: |
+          git clone --depth=1 -b v24.10 https://github.com/openwrt/openwrt.git openwrt
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Copy luci-app-cloud-control to OpenWrt package
+        run: |
+          cp -r ./ openwrt/package/luci-app-cloud-control
+
+      - name: Build luci-app-cloud-control
+        run: |
+          cd openwrt
+          make defconfig
+          make package/luci-app-cloud-control/compile V=s
+
+      - name: Upload .ipk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-cloud-control-ipk
+          path: openwrt/bin/packages/**/luci/luci-app-cloud-control_*.ipk
