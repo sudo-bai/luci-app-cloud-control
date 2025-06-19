@@ -1,4 +1,4 @@
-name: Build luci-app-cloud-control for x86_64
+name: Build cloud-control & luci-app-cloud-control for x86_64
 
 on:
   push:
@@ -10,25 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout plugin source
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
           sudo apt update
           sudo apt install -y build-essential libncurses5-dev gawk git subversion libssl-dev gettext unzip
 
-      - name: Clone OpenWrt source (24.10 x86_64)
+      - name: Clone OpenWrt 24.10 source (x86_64)
         run: |
           git clone --depth=1 -b openwrt-24.10 https://github.com/openwrt/openwrt.git openwrt
 
-      - name: Prepare OpenWrt build system
+      - name: Update feeds
         working-directory: openwrt
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Set target to x86_64
+      - name: Set x86_64 target
         working-directory: openwrt
         run: |
           echo 'CONFIG_TARGET_x86=y' >> .config
@@ -36,18 +36,29 @@ jobs:
           echo 'CONFIG_TARGET_x86_64_Generic=y' >> .config
           make defconfig
 
-      - name: Copy luci-app-cloud-control into OpenWrt packages
+      - name: Copy cloud-control backend
+        run: |
+          mkdir -p openwrt/package/cloud-control
+          cp -r cloud-control/* openwrt/package/cloud-control/
+
+      - name: Copy luci-app-cloud-control frontend
         run: |
           mkdir -p openwrt/package/luci-app-cloud-control
-          cp -r Makefile luasrc root openwrt/package/luci-app-cloud-control/
+          cp -r luci-app-cloud-control/Makefile \
+                luci-app-cloud-control/root \
+                luci-app-cloud-control/luasrc \
+                openwrt/package/luci-app-cloud-control/
 
-      - name: Build luci-app-cloud-control
+      - name: Build both packages
         working-directory: openwrt
         run: |
+          make package/cloud-control/compile V=s -j$(nproc)
           make package/luci-app-cloud-control/compile V=s -j$(nproc)
 
-      - name: Upload .ipk artifact
+      - name: Upload IPK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-cloud-control-x86_64
-          path: openwrt/bin/packages/x86_64/luci/luci-app-cloud-control_*.ipk
+          name: cloud-control-packages
+          path: |
+            openwrt/bin/packages/x86_64/*/cloud-control_*.ipk
+            openwrt/bin/packages/x86_64/*/luci-app-cloud-control_*.ipk
