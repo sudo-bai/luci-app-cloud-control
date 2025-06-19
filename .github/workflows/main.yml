@@ -39,6 +39,13 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Generate .config and defconfig
+        run: |
+          cd $SDK_DIR
+          echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
+          echo "CONFIG_PACKAGE_cloud-control=y" >> .config
+          make defconfig
+
       - name: Build Package
         run: |
           cd $SDK_DIR
