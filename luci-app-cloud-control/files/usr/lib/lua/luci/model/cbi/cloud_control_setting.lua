@@ -9,11 +9,35 @@ local function get_status()
     end
 end
 
+local function get_log()
+    local log_path = "/var/log/cloud_control.log"
+    local f = io.open(log_path, "r")
+    if not f then
+        return "<i>暂无日志</i>"
+    end
+    local lines = {}
+    for line in f:lines() do
+        lines[#lines + 1] = line
+    end
+    f:close()
+    -- 只显示最后50行
+    local total = #lines
+    local show_from = math.max(1, total - 49)
+    local out = table.concat({ unpack(lines, show_from, total) }, "<br>")
+    return "<div style='font-family:monospace;font-size:13px;max-height:300px;overflow:auto;background:#fafbfc;border:1px solid #eee;padding:8px;'>" .. out .. "</div>"
+end
+
 m = Map("cloud_control", "Cloud PC Control Settings")
 
+-- 服务状态
 local s_status = m:section(SimpleSection)
 s_status.title = "服务状态"
 s_status.description = get_status()
+
+-- 日志展示
+local s_log = m:section(SimpleSection)
+s_log.title = "运行日志"
+s_log.description = get_log()
 
 local s = m:section(TypedSection, "main", "Main Settings")
 s.addremove = false
