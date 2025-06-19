@@ -20,7 +20,7 @@ jobs:
 
       - name: Clone OpenWrt SDK
         run: |
-          git clone --depth=1 -b v24.10 https://github.com/openwrt/openwrt.git openwrt
+          git clone --depth=1 -b openwrt-24.10 https://github.com/openwrt/openwrt.git openwrt
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
