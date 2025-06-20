@@ -74,6 +74,7 @@ jobs:
           cd ${{ matrix.sdk_dir }}
           echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
           echo "CONFIG_PACKAGE_cloud-control=y" >> .config
+          make oldconfig </dev/null || true
 
       - name: Build package
         run: |
