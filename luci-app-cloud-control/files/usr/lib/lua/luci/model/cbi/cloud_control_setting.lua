@@ -1,6 +1,5 @@
 local sys = require "luci.sys"
 
--- 检查服务运行状态（更兼容写法）
 local function get_status()
     local running = sys.call("[ -n \"$(ps | grep '[c]loud_control' | grep -v grep)\" ]") == 0
     if running then
@@ -10,7 +9,6 @@ local function get_status()
     end
 end
 
--- 读取最近50行日志
 local function get_log()
     local log_path = "/var/log/cloud_control.log"
     local f = io.open(log_path, "r")
@@ -30,17 +28,14 @@ end
 
 m = Map("cloud_control", "Cloud PC Control Settings")
 
--- 服务状态显示
 local s_status = m:section(SimpleSection)
 s_status.title = "服务状态"
 s_status.description = get_status()
 
--- 日志显示
 local s_log = m:section(SimpleSection)
 s_log.title = "运行日志"
 s_log.description = get_log()
 
--- 主配置表单
 local s = m:section(TypedSection, "main", "Main Settings")
 s.addremove = false
 s.anonymous = true
@@ -58,6 +53,8 @@ enabled.rmempty = false
 
 -- 保存后自动根据开关状态启停服务
 m.on_after_commit = function(self)
+    -- debug log
+    os.execute("echo luci_commit >> /tmp/luci_commit.log")
     local enabled = self.uci:get("cloud_control", "@main[0]", "enabled")
     if enabled == "1" then
         sys.call("/etc/init.d/cloud_control enable >/dev/null 2>&1")
