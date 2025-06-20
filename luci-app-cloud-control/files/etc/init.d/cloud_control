@@ -3,12 +3,14 @@
 START=99
 USE_PROCD=1
 
-start_service() {
+start() {
     local enabled
     enabled="$(uci get cloud_control.@main[0].enabled 2>/dev/null)"
 
     if [ "$enabled" != "1" ]; then
         echo "Cloud control not enabled, skipping start..."
+        # 杀死所有 cloud_control 进程
+        killall cloud_control 2>/dev/null
         return 1
     fi
 
@@ -20,7 +22,11 @@ start_service() {
     procd_close_instance
 }
 
-reload_service() {
+stop() {
+    killall cloud_control 2>/dev/null
+}
+
+reload() {
     stop
     start
 }
