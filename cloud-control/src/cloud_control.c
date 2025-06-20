@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/select.h>
 
 #define LOG_FILE "/var/log/cloud_control.log"
 
