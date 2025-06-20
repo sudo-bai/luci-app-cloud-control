@@ -1,4 +1,4 @@
-name: Build OpenWrt IPK for Popular Architectures
+name: Build OpenWrt IPK
 
 on:
   push:
@@ -8,118 +8,93 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-ipk:
+  build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: x86_64
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-x86-64_*
-          - name: aarch64_cortex-a53
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64_cortex-a53/generic/openwrt-sdk-23.05.3-aarch64_cortex-a53-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-aarch64_cortex-a53-generic_*
+            sdk_dir: openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64
           - name: bcm27xx_bcm2710
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/bcm27xx/bcm2710/openwrt-sdk-23.05.3-bcm27xx-bcm2710_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-bcm27xx-bcm2710_*
+            sdk_dir: openwrt-sdk-23.05.3-bcm27xx-bcm2710_gcc-12.3.0_musl.Linux-x86_64
           - name: ipq40xx_generic
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ipq40xx/generic/openwrt-sdk-23.05.3-ipq40xx-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-ipq40xx-generic_*
+            sdk_dir: openwrt-sdk-23.05.3-ipq40xx-generic_gcc-12.3.0_musl.Linux-x86_64
           - name: ipq806x_generic
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ipq806x/generic/openwrt-sdk-23.05.3-ipq806x-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-ipq806x-generic_*
+            sdk_dir: openwrt-sdk-23.05.3-ipq806x-generic_gcc-12.3.0_musl.Linux-x86_64
           - name: mediatek_filogic
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/mediatek/filogic/openwrt-sdk-23.05.3-mediatek-filogic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-mediatek-filogic_*
+            sdk_dir: openwrt-sdk-23.05.3-mediatek-filogic_gcc-12.3.0_musl.Linux-x86_64
           - name: rockchip_armv8
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/rockchip/armv8/openwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-rockchip-armv8_*
+            sdk_dir: openwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64
           - name: ramips_mt76x8
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ramips/mt76x8/openwrt-sdk-23.05.3-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-ramips-mt76x8_*
+            sdk_dir: openwrt-sdk-23.05.3-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64
           - name: ramips_mt7621
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ramips/mt7621/openwrt-sdk-23.05.3-ramips-mt7621_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-ramips-mt7621_*
+            sdk_dir: openwrt-sdk-23.05.3-ramips-mt7621_gcc-12.3.0_musl.Linux-x86_64
           - name: ath79_generic
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ath79/generic/openwrt-sdk-23.05.3-ath79-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-ath79-generic_*
+            sdk_dir: openwrt-sdk-23.05.3-ath79-generic_gcc-12.3.0_musl.Linux-x86_64
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
+          sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib git gettext libncurses-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget
 
-      - name: Download OpenWrt SDK ${{ matrix.name }}
+      - name: Download and extract SDK
         run: |
-          wget "${{ matrix.sdk_url }}" -O sdk.tar.xz
+          wget ${{ matrix.sdk_url }} -O sdk.tar.xz
           tar -xf sdk.tar.xz
-          SDK_DIR=$(find . -maxdepth 1 -type d -name "${{ matrix.sdk_dir_pattern }}" | head -n1)
-          echo "SDK_DIR=$SDK_DIR" >> $GITHUB_ENV
 
-      - name: Copy packages to SDK ${{ matrix.name }}
+      - name: Prepare package directory
         run: |
-          source $GITHUB_ENV
-          mkdir -p $SDK_DIR/package/luci-app-cloud-control
-          cp -r luci-app-cloud-control/* $SDK_DIR/package/luci-app-cloud-control/
-          mkdir -p $SDK_DIR/package/cloud-control
-          cp -r cloud-control/* $SDK_DIR/package/cloud-control/
+          mkdir -p ${{ matrix.sdk_dir }}/package/nikki
+          rsync -a --exclude=.git ./ ${{ matrix.sdk_dir }}/package/nikki/
 
-      - name: Update Feeds & Install Feeds ${{ matrix.name }}
+      - name: Update & install feeds
         run: |
-          source $GITHUB_ENV
-          cd $SDK_DIR
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
+          cd ${{ matrix.sdk_dir }}
+          ./scripts/feeds update -a || true
+          ./scripts/feeds install -a || true
 
-      - name: Generate .config and defconfig ${{ matrix.name }}
+      - name: Configure .config and defconfig
         run: |
-          source $GITHUB_ENV
-          cd $SDK_DIR
-          echo "CONFIG_PACKAGE_cloud-control=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
+          cd ${{ matrix.sdk_dir }}
+          echo "CONFIG_PACKAGE_nikki=y" >> .config
           make defconfig
 
-      - name: Build cloud-control ${{ matrix.name }}
+      - name: Build package
         run: |
-          source $GITHUB_ENV
-          cd $SDK_DIR
-          make package/cloud-control/compile V=s
+          cd ${{ matrix.sdk_dir }}
+          make package/nikki/compile V=s
 
-      - name: Build luci-app-cloud-control ${{ matrix.name }}
+      - name: Collect ipk
         run: |
-          source $GITHUB_ENV
-          cd $SDK_DIR
-          make package/luci-app-cloud-control/compile V=s
+          mkdir -p ipk
+          find ${{ matrix.sdk_dir }}/bin/ -name "*.ipk" -exec cp {} ipk/ \;
 
-      - name: Archive Built ipk ${{ matrix.name }}
-        if: success()
-        run: |
-          source $GITHUB_ENV
-          mkdir -p ipk-out
-          find $SDK_DIR/bin/ -name "*.ipk" -exec cp {} ipk-out/ \;
-
-      - name: Compress ipk for ${{ matrix.name }}
-        if: success()
-        run: |
-          cd ipk-out
-          tar czvf ../cloud-control_${{ matrix.name }}.tar.gz *.ipk
-
-      - name: Upload Artifact ${{ matrix.name }}
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cloud-control-ipk-${{ matrix.name }}
-          path: cloud-control_${{ matrix.name }}.tar.gz
+          name: nikki-ipk-${{ matrix.name }}
+          path: ipk/
 
   release:
-    needs: build-ipk
+    needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Download all build artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -127,4 +102,4 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/cloud-control_*.tar.gz
+          files: artifacts/**/nikki-ipk-*/**/*.ipk
