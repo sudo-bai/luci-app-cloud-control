@@ -1,5 +1,6 @@
 local sys = require "luci.sys"
 
+-- 检查服务运行状态
 local function get_status()
     local running = sys.call("pidof cloud_control >/dev/null") == 0
     if running then
@@ -8,6 +9,8 @@ local function get_status()
         return "<b><span style='color:red;'>已停止</span></b>"
     end
 end
+
+-- 读取最近50行日志
 local function get_log()
     local log_path = "/var/log/cloud_control.log"
     local f = io.open(log_path, "r")
@@ -27,14 +30,17 @@ end
 
 m = Map("cloud_control", "Cloud PC Control Settings")
 
+-- 服务状态显示
 local s_status = m:section(SimpleSection)
 s_status.title = "服务状态"
 s_status.description = get_status()
 
+-- 日志显示
 local s_log = m:section(SimpleSection)
 s_log.title = "运行日志"
 s_log.description = get_log()
 
+-- 主配置表单
 local s = m:section(TypedSection, "main", "Main Settings")
 s.addremove = false
 s.anonymous = true
@@ -50,8 +56,10 @@ local enabled = s:option(Flag, "enabled", "Enable Cloud Control")
 enabled.default = "0"
 enabled.rmempty = false
 
+-- 保存后自动设置开机自启并重启服务
 m.on_after_commit = function(self)
-    luci.sys.call("/etc/init.d/cloud_control reload >/dev/null 2>&1 &")
+    luci.sys.call("/etc/init.d/cloud_control enable >/dev/null 2>&1")
+    luci.sys.call("/etc/init.d/cloud_control restart >/dev/null 2>&1 &")
 end
 
 return m
