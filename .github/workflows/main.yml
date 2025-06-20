@@ -1,14 +1,62 @@
-name: Build OpenWrt ipk
+name: Build OpenWrt IPK (Multi-Arch, Archive & Named)
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build-ipk:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          # x86_64
+          - name: x86_64
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-x86-64_*
+          # ARMv7 Cortex-A7 (Raspberry Pi 2/3/4等)
+          - name: arm_cortex-a7
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/bcm27xx/bcm2710/openwrt-sdk-23.05.3-bcm27xx-bcm2710_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-bcm27xx-bcm2710_*
+          # ARMv8 Cortex-A53
+          - name: arm_cortex-a53
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64/cortex-a53/openwrt-sdk-23.05.3-aarch64-cortex-a53_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-aarch64-cortex-a53_*
+          # ARMv8 (64位)
+          - name: aarch64_generic
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64/generic/openwrt-sdk-23.05.3-aarch64-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-aarch64-generic_*
+          # ARMv7 (ipq40xx, 典型高通机型)
+          - name: ipq40xx
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ipq40xx/generic/openwrt-sdk-23.05.3-ipq40xx-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-ipq40xx-generic_*
+          # MIPS 24kc (mt76x8, 低端路由器普及)
+          - name: mipsel_24kc
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ramips/mt76x8/openwrt-sdk-23.05.3-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-ramips-mt76x8_*
+          # MIPS 74kc (mt7621, 普及家用路由)
+          - name: mipsel_74kc
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ramips/mt7621/openwrt-sdk-23.05.3-ramips-mt7621_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-ramips-mt7621_*
+          # MIPS 24kec (ar71xx/ath79, 老款TP-LINK/网件)
+          - name: mips_24kc
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ath79/generic/openwrt-sdk-23.05.3-ath79-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-ath79-generic_*
+          # IPQ806x (高通高端)
+          - name: ipq806x
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ipq806x/generic/openwrt-sdk-23.05.3-ipq806x-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-ipq806x-generic_*
+          # Rockchip ARMv8
+          - name: rockchip_armv8
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/rockchip/armv8/openwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-rockchip-armv8_*
+          # Mediatek ARMv8
+          - name: mediatek_filogic
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/mediatek/filogic/openwrt-sdk-23.05.3-mediatek-filogic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-mediatek-filogic_*
 
     steps:
       - name: Checkout Code
@@ -19,15 +67,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
 
-      - name: Download OpenWrt SDK
+      - name: Download OpenWrt SDK ${{ matrix.target.name }}
         run: |
-          export OWRT_SDK_URL="https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
-          wget "$OWRT_SDK_URL" -O sdk.tar.xz
+          wget "${{ matrix.target.sdk_url }}" -O sdk.tar.xz
           tar -xf sdk.tar.xz
-          SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
+          SDK_DIR=$(find . -maxdepth 1 -type d -name "${{ matrix.target.sdk_dir_pattern }}" | head -n1)
           echo "SDK_DIR=$SDK_DIR" >> $GITHUB_ENV
 
-      - name: Copy packages to SDK
+      - name: Copy packages to SDK ${{ matrix.target.name }}
         run: |
           source $GITHUB_ENV
           mkdir -p $SDK_DIR/package/luci-app-cloud-control
@@ -35,14 +82,14 @@ jobs:
           mkdir -p $SDK_DIR/package/cloud-control
           cp -r cloud-control/* $SDK_DIR/package/cloud-control/
 
-      - name: Update Feeds & Install Feeds
+      - name: Update Feeds & Install Feeds ${{ matrix.target.name }}
         run: |
           source $GITHUB_ENV
           cd $SDK_DIR
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Generate .config and defconfig
+      - name: Generate .config and defconfig ${{ matrix.target.name }}
         run: |
           source $GITHUB_ENV
           cd $SDK_DIR
@@ -50,27 +97,49 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
           make defconfig
 
-      - name: Build cloud-control
+      - name: Build cloud-control ${{ matrix.target.name }}
         run: |
           source $GITHUB_ENV
           cd $SDK_DIR
           make package/cloud-control/compile V=s
 
-      - name: Build luci-app-cloud-control
+      - name: Build luci-app-cloud-control ${{ matrix.target.name }}
         run: |
           source $GITHUB_ENV
           cd $SDK_DIR
           make package/luci-app-cloud-control/compile V=s
 
-      - name: Archive Built ipk
+      - name: Archive Built ipk ${{ matrix.target.name }}
         if: success()
         run: |
           source $GITHUB_ENV
           mkdir -p ipk-out
           find $SDK_DIR/bin/ -name "*.ipk" -exec cp {} ipk-out/ \;
 
-      - name: Upload ipk Artifact
+      - name: Compress ipk for ${{ matrix.target.name }}
+        if: success()
+        run: |
+          cd ipk-out
+          tar czvf ../cloud-control_${{ matrix.target.name }}.tar.gz *.ipk
+
+      - name: Upload Artifact ${{ matrix.target.name }}
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-cloud-control-ipk
-          path: ipk-out/
+          name: cloud-control-ipk-${{ matrix.target.name }}
+          path: cloud-control_${{ matrix.target.name }}.tar.gz
+
+  # 可选：自动发布 Release，附加所有架构的压缩包
+  release:
+    needs: build-ipk
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/cloud-control_*.tar.gz
