@@ -10,7 +10,11 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
+// 日志文件路径
 #define LOG_FILE "/var/log/cloud_control.log"
 
 struct Config {
@@ -25,6 +29,26 @@ struct Config {
 };
 
 static volatile sig_atomic_t g_running = 1;
+
+// 守护进程化处理，避免被CGI父进程带崩
+static int daemonize() {
+    pid_t pid = fork();
+    if (pid < 0) return -1;
+    if (pid > 0) exit(0); // 父进程直接退出
+    if (setsid() < 0) return -1;
+    pid = fork();
+    if (pid < 0) return -1;
+    if (pid > 0) exit(0);
+    umask(0);
+    chdir("/");
+    close(0);
+    close(1);
+    close(2);
+    open("/dev/null", O_RDONLY);
+    open("/dev/null", O_WRONLY);
+    open("/dev/null", O_RDWR);
+    return 0;
+}
 
 // 日志打印, 密码自动脱敏
 static void log_message(const char *fmt, ...) {
@@ -107,7 +131,6 @@ static void load_config(struct Config *cfg) {
             else if (strcmp(opt_e->name, "enabled") == 0 && option->type == UCI_TYPE_STRING)
                 safe_strcpy(cfg->enabled, option->v.string, sizeof(cfg->enabled));
         }
-        // 日志脱敏
         log_message("Config loaded: client_id=%s, ip=%s, user=%s, nic=%s, mac=%s, topic=%s, enabled=%s",
             cfg->client_id, cfg->ip, cfg->user, cfg->nic, cfg->mac, cfg->topic, cfg->enabled);
     } else {
@@ -227,6 +250,9 @@ static void sig_handler(int sig) {
 }
 
 int main() {
+    // 守护进程化，兼容uhttpd/Luci/后台环境
+    daemonize();
+
     signal(SIGTERM, sig_handler);
     signal(SIGINT, sig_handler);
 
