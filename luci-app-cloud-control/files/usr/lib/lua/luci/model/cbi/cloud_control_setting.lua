@@ -56,10 +56,16 @@ local enabled = s:option(Flag, "enabled", "Enable Cloud Control")
 enabled.default = "0"
 enabled.rmempty = false
 
--- 保存后自动设置开机自启并重启服务
+-- 保存后自动根据开关状态启停服务
 m.on_after_commit = function(self)
-    luci.sys.call("/etc/init.d/cloud_control enable >/dev/null 2>&1")
-    luci.sys.call("/etc/init.d/cloud_control restart >/dev/null 2>&1 &")
+    local enabled = self.uci:get("cloud_control", "@main[0]", "enabled")
+    if enabled == "1" then
+        luci.sys.call("/etc/init.d/cloud_control enable >/dev/null 2>&1")
+        luci.sys.call("/etc/init.d/cloud_control start >/dev/null 2>&1")
+    else
+        luci.sys.call("/etc/init.d/cloud_control stop >/dev/null 2>&1")
+        luci.sys.call("/etc/init.d/cloud_control disable >/dev/null 2>&1")
+    end
 end
 
 return m
