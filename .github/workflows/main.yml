@@ -58,8 +58,10 @@ jobs:
 
       - name: Prepare package directory
         run: |
+          mkdir -p ${{ matrix.sdk_dir }}/package/cloud-control
           mkdir -p ${{ matrix.sdk_dir }}/package/luci-app-cloud-control
-          rsync -a --exclude=.git ./ ${{ matrix.sdk_dir }}/package/luci-app-cloud-control/
+          rsync -a ./cloud-control/ ${{ matrix.sdk_dir }}/package/cloud-control/
+          rsync -a ./luci-app-cloud-control/ ${{ matrix.sdk_dir }}/package/luci-app-cloud-control/
 
       # Feeds update/install, ignore error if no feeds
       - name: Update & install feeds
@@ -71,11 +73,13 @@ jobs:
         run: |
           cd ${{ matrix.sdk_dir }}
           echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
+          echo "CONFIG_PACKAGE_cloud-control=y" >> .config
 
       - name: Build package
         run: |
           cd ${{ matrix.sdk_dir }}
           make package/luci-app-cloud-control/compile V=s
+          make package/cloud-control/compile V=s
 
       - name: Collect ipk
         run: |
