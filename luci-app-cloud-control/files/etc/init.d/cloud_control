@@ -1,30 +1,17 @@
 #!/bin/sh /etc/rc.common
 
 START=99
-USE_PROCD=1
 
-start_service() {
-    local enabled
-    enabled="$(uci get cloud_control.@main[0].enabled 2>/dev/null)"
-
-    if [ "$enabled" = "1" ]; then
-        procd_open_instance
-        procd_set_param command /usr/bin/cloud_control
-        procd_set_param respawn 3600 5 0        # 1小时内最多重启5次，超出则不再自动拉起
-        procd_set_param stdout 1
-        procd_set_param stderr 1
-        procd_set_param user root
-        procd_close_instance
-    else
-        stop_service
-    fi
+start() {
+    /usr/bin/cloud_control
 }
 
-stop_service() {
-    procd_kill cloud_control
+stop() {
+    killall -9 cloud_control 2>/dev/null
 }
 
-reload_service() {
-    stop_service
-    start_service
+restart() {
+    stop
+    sleep 1
+    start
 }
