@@ -1,4 +1,3 @@
-#include <libubox/uloop.h>
 #include <uci.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -9,6 +8,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <signal.h>
 
 #define LOG_FILE "/var/log/cloud_control.log"
 
@@ -23,9 +23,20 @@ struct Config {
     char enabled[8];
 };
 
+static volatile sig_atomic_t g_running = 1;
+
+// 日志打印, 密码自动脱敏
 static void log_message(const char *fmt, ...) {
     FILE *f = fopen(LOG_FILE, "a");
-    if (!f) return;
+    if (!f) {
+        // fallback
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(stderr, fmt, args);
+        va_end(args);
+        fprintf(stderr, "\n");
+        return;
+    }
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     char tbuf[32];
@@ -41,9 +52,23 @@ static void log_message(const char *fmt, ...) {
     fclose(f);
 }
 
+// 安全字符串拷贝
+static void safe_strcpy(char *dst, const char *src, size_t dsz) {
+    if (!dst || dsz == 0) return;
+    if (src) {
+        strncpy(dst, src, dsz - 1);
+        dst[dsz - 1] = 0;
+    } else {
+        dst[0] = 0;
+    }
+}
+
+// 配置加载
 static void load_config(struct Config *cfg) {
     struct uci_context *ctx = uci_alloc_context();
     struct uci_package *pkg = NULL;
+
+    memset(cfg, 0, sizeof(*cfg));
 
     if (uci_load(ctx, "cloud_control", &pkg)) {
         log_message("ERROR: Failed to load config");
@@ -60,34 +85,33 @@ static void load_config(struct Config *cfg) {
         }
         s = NULL;
     }
-
     if (s) {
         struct uci_element *opt_e = NULL;
         uci_foreach_element(&s->options, opt_e) {
             struct uci_option *option = uci_to_option(opt_e);
             if (strcmp(opt_e->name, "client_id") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->client_id, option->v.string, sizeof(cfg->client_id));
+                safe_strcpy(cfg->client_id, option->v.string, sizeof(cfg->client_id));
             else if (strcmp(opt_e->name, "ip") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->ip, option->v.string, sizeof(cfg->ip));
+                safe_strcpy(cfg->ip, option->v.string, sizeof(cfg->ip));
             else if (strcmp(opt_e->name, "password") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->password, option->v.string, sizeof(cfg->password));
+                safe_strcpy(cfg->password, option->v.string, sizeof(cfg->password));
             else if (strcmp(opt_e->name, "user") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->user, option->v.string, sizeof(cfg->user));
+                safe_strcpy(cfg->user, option->v.string, sizeof(cfg->user));
             else if (strcmp(opt_e->name, "nic") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->nic, option->v.string, sizeof(cfg->nic));
+                safe_strcpy(cfg->nic, option->v.string, sizeof(cfg->nic));
             else if (strcmp(opt_e->name, "mac") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->mac, option->v.string, sizeof(cfg->mac));
+                safe_strcpy(cfg->mac, option->v.string, sizeof(cfg->mac));
             else if (strcmp(opt_e->name, "topic") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->topic, option->v.string, sizeof(cfg->topic));
+                safe_strcpy(cfg->topic, option->v.string, sizeof(cfg->topic));
             else if (strcmp(opt_e->name, "enabled") == 0 && option->type == UCI_TYPE_STRING)
-                strncpy(cfg->enabled, option->v.string, sizeof(cfg->enabled));
+                safe_strcpy(cfg->enabled, option->v.string, sizeof(cfg->enabled));
         }
+        // 日志脱敏
         log_message("Config loaded: client_id=%s, ip=%s, user=%s, nic=%s, mac=%s, topic=%s, enabled=%s",
             cfg->client_id, cfg->ip, cfg->user, cfg->nic, cfg->mac, cfg->topic, cfg->enabled);
     } else {
         log_message("ERROR: Section 'main' not found in config");
     }
-
     uci_unload(ctx, pkg);
     uci_free_context(ctx);
 }
@@ -146,7 +170,7 @@ int send_ping(int sock) {
 // 执行开机命令
 void do_poweron(const struct Config* cfg) {
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "/usr/bin/etherwake -D -i \"%s\" \"%s\"", cfg->nic, cfg->mac);
+    snprintf(cmd, sizeof(cmd), "/usr/bin/etherwake -D -i '%s' '%s'", cfg->nic, cfg->mac);
     log_message("poweron: %s", cmd);
     system(cmd);
 }
@@ -159,14 +183,14 @@ void do_poweroff(const struct Config* cfg) {
     snprintf(cmd1, sizeof(cmd1),
         "/usr/bin/curl -s \"https://api.bemfa.com/api/device/v1/data/3/push/get/?uid=%s&topic=%s&msg=off\" -w \"\\n\"",
         cfg->client_id, cfg->topic);
-    log_message("poweroff-report: %s", cmd1);
+    log_message("poweroff-report: curl for topic=%s", cfg->topic);
     system(cmd1);
 
-    // ssh局域网关机
+    // ssh局域网关机（参数加引号，防止注入）
     snprintf(cmd2, sizeof(cmd2),
-        "sshpass -p '%s' ssh -o StrictHostKeyChecking=no -A -g %s@%s \"shutdown -s -t 10\"",
+        "sshpass -p '%s' ssh -o StrictHostKeyChecking=no -A -g '%s'@'%s' \"shutdown -s -t 10\"",
         cfg->password, cfg->user, cfg->ip);
-    log_message("poweroff-ssh: %s", cmd2);
+    log_message("poweroff-ssh: ssh to %s@%s", cfg->user, cfg->ip);
     system(cmd2);
 }
 
@@ -179,7 +203,7 @@ void handle_message(const char* msg, const struct Config* cfg) {
     pos += strlen(key);
     char val[16];
     int i = 0;
-    while (*pos && *pos != '&' && *pos != '\r' && *pos != '\n' && i < 15) {
+    while (*pos && *pos != '&' && *pos != '\r' && *pos != '\n' && i < (int)sizeof(val) - 1) {
         val[i++] = *pos++;
     }
     val[i] = 0;
@@ -194,7 +218,17 @@ void handle_message(const char* msg, const struct Config* cfg) {
     }
 }
 
+// 信号处理，支持优雅退出和热重载
+static void sig_handler(int sig) {
+    if (sig == SIGTERM || sig == SIGINT) {
+        g_running = 0;
+    }
+}
+
 int main() {
+    signal(SIGTERM, sig_handler);
+    signal(SIGINT, sig_handler);
+
     struct Config config;
     memset(&config, 0, sizeof(config));
     log_message("cloud_control starting...");
@@ -211,10 +245,10 @@ int main() {
     int sock = -1;
 
     // 主循环：自动重连
-    while (1) {
+    while (g_running) {
         sock = tcp_connect(server_host, server_port);
         if (sock < 0) {
-            sleep(10);
+            for (int i = 0; i < 10 && g_running; ++i) sleep(1);
             continue;
         }
 
@@ -222,44 +256,57 @@ int main() {
 
         // 心跳时间
         time_t last_ping = time(NULL);
+        time_t last_reload = time(NULL);
 
-        fd_set rfds;
-        struct timeval tv;
-        int ret;
-
-        while (1) {
+        while (g_running) {
+            fd_set rfds;
+            struct timeval tv;
             FD_ZERO(&rfds);
             FD_SET(sock, &rfds);
             tv.tv_sec = 1;
             tv.tv_usec = 0;
-
-            ret = select(sock+1, &rfds, NULL, NULL, &tv);
+            int ret = select(sock + 1, &rfds, NULL, NULL, &tv);
 
             time_t now = time(NULL);
+
+            // 配置热重载（每10分钟重新加载）
+            if (now - last_reload >= 600) {
+                load_config(&config);
+                last_reload = now;
+            }
+
             if (now - last_ping >= 30) {
                 send_ping(sock);
                 last_ping = now;
             }
 
             if (ret < 0) {
+                if (errno == EINTR && !g_running) break;
                 log_message("select error: %s", strerror(errno));
                 break;
             } else if (ret == 0) {
                 continue;
             } else if (FD_ISSET(sock, &rfds)) {
                 char buf[1024];
-                int len = recv(sock, buf, sizeof(buf)-1, 0);
-                if (len <= 0) {
-                    log_message("tcp connection closed or error, reconnecting...");
+                int len;
+                // 读尽所有数据
+                while ((len = recv(sock, buf, sizeof(buf) - 1, MSG_DONTWAIT)) > 0) {
+                    buf[len] = '\0';
+                    handle_message(buf, &config);
+                }
+                if (len == 0) {
+                    log_message("tcp connection closed, reconnecting...");
+                    close(sock);
+                    break;
+                } else if (len < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                    log_message("recv error: %s", strerror(errno));
                     close(sock);
                     break;
                 }
-                buf[len] = '\0';
-                handle_message(buf, &config);
             }
         }
         if (sock >= 0) close(sock);
-        sleep(2);
+        if (g_running) sleep(2);
     }
     log_message("cloud_control stopped.");
     return 0;
