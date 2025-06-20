@@ -54,14 +54,12 @@ enabled.rmempty = false
 -- 保存后自动根据开关状态启停服务
 m.on_after_commit = function(self)
     local enabled = self.uci:get("cloud_control", "@main[0]", "enabled")
-    -- debug log
-    os.execute("echo luci_commit enabled=" .. tostring(enabled) .. " >> /tmp/luci_commit.log")
     if enabled == "1" then
-        os.execute("/etc/init.d/cloud_control enable >> /tmp/luci_commit.log 2>&1")
-        os.execute("/etc/init.d/cloud_control start >> /tmp/luci_commit.log 2>&1")
+        os.execute("/etc/init.d/cloud_control enable")
+        os.execute("/etc/init.d/cloud_control start")
     else
-        os.execute("/etc/init.d/cloud_control stop >> /tmp/luci_commit.log 2>&1")
-        os.execute("/etc/init.d/cloud_control disable >> /tmp/luci_commit.log 2>&1")
+        os.execute("/etc/init.d/cloud_control stop")
+        os.execute("/etc/init.d/cloud_control disable")
     end
 end
 
