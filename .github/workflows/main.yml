@@ -58,8 +58,8 @@ jobs:
 
       - name: Prepare package directory
         run: |
-          mkdir -p ${{ matrix.sdk_dir }}/package/nikki
-          rsync -a --exclude=.git ./ ${{ matrix.sdk_dir }}/package/nikki/
+          mkdir -p ${{ matrix.sdk_dir }}/package/luci-app-cloud-control
+          rsync -a --exclude=.git ./ ${{ matrix.sdk_dir }}/package/luci-app-cloud-control/
 
       - name: Update & install feeds
         run: |
@@ -70,13 +70,13 @@ jobs:
       - name: Configure .config and defconfig
         run: |
           cd ${{ matrix.sdk_dir }}
-          echo "CONFIG_PACKAGE_nikki=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-cloud-control=y" >> .config
           make defconfig
 
       - name: Build package
         run: |
           cd ${{ matrix.sdk_dir }}
-          make package/nikki/compile V=s
+          make package/luci-app-cloud-control/compile V=s
 
       - name: Collect ipk
         run: |
@@ -86,7 +86,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nikki-ipk-${{ matrix.name }}
+          name: luci-app-cloud-control-ipk-${{ matrix.name }}
           path: ipk/
 
   release:
@@ -102,4 +102,4 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/nikki-ipk-*/**/*.ipk
+          files: artifacts/**/luci-app-cloud-control-ipk-*/**/*.ipk
