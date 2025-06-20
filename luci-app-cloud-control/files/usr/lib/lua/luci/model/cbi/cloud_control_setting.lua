@@ -1,14 +1,13 @@
 local sys = require "luci.sys"
 
 local function get_status()
-    local running = sys.call("pgrep -f /usr/bin/cloud_control >/dev/null") == 0
+    local running = sys.call("pidof cloud_control >/dev/null") == 0
     if running then
         return "<b><span style='color:green;'>正在运行</span></b>"
     else
         return "<b><span style='color:red;'>已停止</span></b>"
     end
 end
-
 local function get_log()
     local log_path = "/var/log/cloud_control.log"
     local f = io.open(log_path, "r")
