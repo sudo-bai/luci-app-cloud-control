@@ -16,9 +16,9 @@ jobs:
           - name: x86_64
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
             sdk_dir_pattern: openwrt-sdk-23.05.3-x86-64_*
-          - name: aarch64_generic
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64/generic/openwrt-sdk-23.05.3-aarch64-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-aarch64-generic_*
+          - name: aarch64_cortex-a53
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64_cortex-a53/generic/openwrt-sdk-23.05.3-aarch64_cortex-a53-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-aarch64_cortex-a53-generic_*
           - name: bcm27xx_bcm2710
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/bcm27xx/bcm2710/openwrt-sdk-23.05.3-bcm27xx-bcm2710_gcc-12.3.0_musl.Linux-x86_64.tar.xz
             sdk_dir_pattern: openwrt-sdk-23.05.3-bcm27xx-bcm2710_*
