@@ -250,7 +250,6 @@ static void sig_handler(int sig) {
 }
 
 int main() {
-    // 守护进程化，兼容uhttpd/Luci/后台环境
     daemonize();
 
     signal(SIGTERM, sig_handler);
@@ -261,6 +260,14 @@ int main() {
     log_message("cloud_control starting...");
     load_config(&config);
 
+    // 最多等5秒，等待 enabled=1
+    int retry = 0;
+    while (strcmp(config.enabled, "1") != 0 && retry < 5) {
+        log_message("cloud_control not enabled, waiting...");
+        sleep(1);
+        load_config(&config);
+        retry++;
+    }
     if (strcmp(config.enabled, "1") != 0) {
         log_message("cloud_control not enabled, exiting...");
         log_message("cloud_control stopped.");
@@ -270,7 +277,6 @@ int main() {
     const char* server_host = "bemfa.com";
     int server_port = 8344;
     int sock = -1;
-
     // 主循环：自动重连
     while (g_running) {
         sock = tcp_connect(server_host, server_port);
