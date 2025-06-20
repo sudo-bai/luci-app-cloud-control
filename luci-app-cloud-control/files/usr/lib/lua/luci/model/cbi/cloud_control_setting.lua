@@ -1,8 +1,8 @@
 local sys = require "luci.sys"
 
--- 检查服务运行状态
+-- 检查服务运行状态（更兼容写法）
 local function get_status()
-    local running = sys.call("pidof cloud_control >/dev/null") == 0
+    local running = sys.call("[ -n \"$(ps | grep '[c]loud_control' | grep -v grep)\" ]") == 0
     if running then
         return "<b><span style='color:green;'>正在运行</span></b>"
     else
@@ -60,11 +60,11 @@ enabled.rmempty = false
 m.on_after_commit = function(self)
     local enabled = self.uci:get("cloud_control", "@main[0]", "enabled")
     if enabled == "1" then
-        luci.sys.call("/etc/init.d/cloud_control enable >/dev/null 2>&1")
-        luci.sys.call("/etc/init.d/cloud_control start >/dev/null 2>&1")
+        sys.call("/etc/init.d/cloud_control enable >/dev/null 2>&1")
+        sys.call("/etc/init.d/cloud_control start >/dev/null 2>&1")
     else
-        luci.sys.call("/etc/init.d/cloud_control stop >/dev/null 2>&1")
-        luci.sys.call("/etc/init.d/cloud_control disable >/dev/null 2>&1")
+        sys.call("/etc/init.d/cloud_control stop >/dev/null 2>&1")
+        sys.call("/etc/init.d/cloud_control disable >/dev/null 2>&1")
     end
 end
 
