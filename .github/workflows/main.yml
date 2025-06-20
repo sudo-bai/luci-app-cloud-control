@@ -15,32 +15,32 @@ jobs:
       matrix:
         include:
           - name: x86_64
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/openwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-x86-64_gcc-13.2.0_musl.Linux-x86_64
           - name: bcm27xx_bcm2710
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/bcm27xx/bcm2710/openwrt-sdk-23.05.3-bcm27xx-bcm2710_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-bcm27xx-bcm2710_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/bcm27xx/bcm2710/openwrt-sdk-24.10.0-bcm27xx-bcm2710_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-bcm27xx-bcm2710_gcc-13.2.0_musl.Linux-x86_64
           - name: ipq40xx_generic
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ipq40xx/generic/openwrt-sdk-23.05.3-ipq40xx-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-ipq40xx-generic_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/ipq40xx/generic/openwrt-sdk-24.10.0-ipq40xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-ipq40xx-generic_gcc-13.2.0_musl.Linux-x86_64
           - name: ipq806x_generic
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ipq806x/generic/openwrt-sdk-23.05.3-ipq806x-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-ipq806x-generic_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/ipq806x/generic/openwrt-sdk-24.10.0-ipq806x-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-ipq806x-generic_gcc-13.2.0_musl.Linux-x86_64
           - name: mediatek_filogic
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/mediatek/filogic/openwrt-sdk-23.05.3-mediatek-filogic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-mediatek-filogic_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/mediatek/filogic/openwrt-sdk-24.10.0-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-mediatek-filogic_gcc-13.2.0_musl.Linux-x86_64
           - name: rockchip_armv8
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/rockchip/armv8/openwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/rockchip/armv8/openwrt-sdk-24.10.0-rockchip-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-rockchip-armv8_gcc-13.2.0_musl.Linux-x86_64
           - name: ramips_mt76x8
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ramips/mt76x8/openwrt-sdk-23.05.3-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/ramips/mt76x8/openwrt-sdk-24.10.0-ramips-mt76x8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-ramips-mt76x8_gcc-13.2.0_musl.Linux-x86_64
           - name: ramips_mt7621
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ramips/mt7621/openwrt-sdk-23.05.3-ramips-mt7621_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-ramips-mt7621_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://downloads.openwrt.org/releases/24.10.0/targets/ramips/mt7621/openwrt-sdk-24.10.0-ramips-mt7621_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-ramips-mt7621_gcc-13.2.0_musl.Linux-x86_64
           - name: ath79_generic
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/ath79/generic/openwrt-sdk-23.05.3-ath79-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir: openwrt-sdk-23.05.3-ath79-generic_gcc-12.3.0_musl.Linux-x86_64
+            sdk_url: https://mirror-03.infra.openwrt.org/releases/24.10.0/targets/ath79/generic/openwrt-sdk-24.10.0-ath79-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+            sdk_dir: openwrt-sdk-24.10.0-ath79-generic_gcc-13.2.0_musl.Linux-x86_64
 
     steps:
       - name: Checkout
