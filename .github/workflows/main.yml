@@ -21,10 +21,10 @@ jobs:
           - name: arm_cortex-a7
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/bcm27xx/bcm2710/openwrt-sdk-23.05.3-bcm27xx-bcm2710_gcc-12.3.0_musl.Linux-x86_64.tar.xz
             sdk_dir_pattern: openwrt-sdk-23.05.3-bcm27xx-bcm2710_*
-          # ARMv8 Cortex-A53
-          - name: arm_cortex-a53
-            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64/cortex-a53/openwrt-sdk-23.05.3-aarch64-cortex-a53_gcc-12.3.0_musl.Linux-x86_64.tar.xz
-            sdk_dir_pattern: openwrt-sdk-23.05.3-aarch64-cortex-a53_*
+          # ARMv8 Cortex-A53 64位
+          - name: aarch64_generic
+            sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64/generic/openwrt-sdk-23.05.3-aarch64-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+            sdk_dir_pattern: openwrt-sdk-23.05.3-aarch64-generic_*
           # ARMv8 (64位)
           - name: aarch64_generic
             sdk_url: https://downloads.openwrt.org/releases/23.05.3/targets/aarch64/generic/openwrt-sdk-23.05.3-aarch64-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
