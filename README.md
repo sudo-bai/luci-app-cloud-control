@@ -53,7 +53,8 @@ config main
 ```
 
 也可通过 Luci 前端启用/禁用服务。
-#测试成功后就可以在米家绑定巴法云，然后让小爱同学控制了
+
+###测试成功后就可以在米家绑定巴法云，然后让小爱同学控制了
 ### 4. 日志查看
 
 程序日志默认写入 `/var/log/cloud_control.log`。可通过以下命令查看运行状态：
@@ -71,8 +72,7 @@ tail -f /var/log/cloud_control.log
 
 ## 贡献与支持
 
-欢迎提交 issue 或 pull request 共同完善本项目。如有问题可通过 [bemfa.com](https://www.bemfa.com/) 或相关技术论坛交流。
-
+欢迎提交 issue 或 pull request 共同完善本项目。
 ---
 
 **作者：** sudo-bai  
